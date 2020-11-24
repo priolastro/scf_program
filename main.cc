@@ -1,6 +1,6 @@
 // MINIMAL BASIS STO-3G CALCULATION ON HEH+
 
-// THIS IS A LITTLE DUMMY MAIN PROGRAM WHICH CALLS HFCALC
+// THIS IS alpha LITTLE DUMMY MAIN PROGRAM WHICH CALLS HFCALC
 // Attila Szabo and Neil S. Ostlund
 //https://github.com/lcb/szabo.py/blob/master/szabo.py
 
@@ -15,9 +15,14 @@
 using namespace std;
 
 
-double S_integral(double& alpha, double& beta, double& Rab2) {
+double S_integral(double alpha, double beta, double Rab2) {
     double S=pow((M_PI)/(alpha+beta),1.5)*exp(-(alpha*beta)/(alpha+beta)*Rab2);
     return S;
+}
+
+double T_integral(double alpha, double beta, double Rab2){
+    double T = alpha*beta/(alpha+beta)*(3-(2*alpha*beta)/(alpha+beta)*Rab2)*pow(M_PI/(alpha+beta),1.5)*exp(-(alpha*beta)/(alpha+beta)*Rab2);
+    return T;
 }
 
 double Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& ZB) {
@@ -50,13 +55,19 @@ double Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& Z
     }
 
     double Rab2=pow(R,2);
-    double S12=0;
+    double S12=0;   
+    double T11=0;
+    double T12=0;
+    double T22=0;
     for (int i=0; i<N; i++){
         for(int j=0; j<N; j++){
             S12+=S_integral(alpha1[i], alpha2[j], Rab2)* cont1[i] * cont2[j];
+            T11+=T_integral(alpha1[i], alpha1[j], 0)*cont1[i]*cont1[j];
+            T12+=T_integral(alpha1[i], alpha2[j], Rab2)*cont1[i]*cont2[j];
+            T22+=T_integral(alpha2[i], alpha2[j], 0)*cont2[i]*cont2[j];
         }
     }
-    return S12;
+    return S12, T11, T12, T22;
 }
 
 int main(int argc, char** argv) {
@@ -73,9 +84,12 @@ int main(int argc, char** argv) {
 
     // HartreeFook_Calculation(N,R,Z1,Z2,ZA,ZB);
 
-    double S12=Integral(N, R, Z1, Z2, ZA, ZB);
+    double S12, T11, T12, T22=Integral(N, R, Z1, Z2, ZA, ZB);
     
     cout << "S12= " << S12 << endl;
-    
+    cout << "T11= " << T11 << endl;
+    cout << "T12= " << T12 << endl;
+    cout << "T22= " << T22 << endl;
+
     return 0;
 }
