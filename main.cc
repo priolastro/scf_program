@@ -37,6 +37,11 @@ double V_integral(double& alpha, double& beta, double Rab2, double Rcp2 , double
     return V;
 }
 
+double TE_integral(double& A, double& B, double& C, double& D, double& RAB2, double& RCD2, double& RPQ2){
+    double TE=2*pow(M_PI,2.5)pow((A+B)*(C+D)*pow(A + B + C + D,0.5)) * Function0((A+B)*(C+D)*RPQ2/(A+B+C+D))*exp(-A*B*RAB2/(A+B)-C*D*RCD2/(C + D),-1)
+    return TE;
+}
+
 
 
 double Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& ZB) {
@@ -62,10 +67,11 @@ double Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& Z
     vector<double> cont2(N,0);
 
     for (int i=0; i<N; i++){
-        alpha1[i]=expon[i][N-1]*pow(Z1, 2);
-        alpha2[i]=expon[i][N-1]*pow(Z2, 2);
-        cont1[i]=coef[i][N-1]*pow(2*alpha1[i]/M_PI,0.75);
-        cont2[i]=coef[i][N-1]*pow(2*alpha2[i]/M_PI,0.75);
+        //to fit slater function with orbital exponent different than 1 (equation 3.224) 
+        alpha1[i]=expon[i][N-1] *pow(Z1, 2);
+        alpha2[i]=expon[i][N-1] *pow(Z2, 2);
+        cont1[i]=coef[i][N-1]   *pow(2*alpha1[i]/M_PI,0.75);
+        cont2[i]=coef[i][N-1]   *pow(2*alpha2[i]/M_PI,0.75);
     }
 
     double Rab2=pow(R,2);
@@ -108,7 +114,31 @@ double Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& Z
     cout << "V12B" << V12B << endl;
     cout << "V22B" << V22B << endl;
 
-    
+    double V1111 = 0;
+    double V2111 = 0;
+    double V2121 = 0;
+    double V2211 = 0;
+    double V2221 = 0;
+    double V2222 = 0;
+
+    for (int i=0; i<N; i++){
+        for (int j=0; i<N; i++){
+            for (int k=0; i<N; i++){
+                for (int l=0; i<N; i++){
+                    double Rap=alpha2[i]*R/(alpha1[i]+alpha2[j]);
+                    double Rbp=R-Rap;
+                    double Raq=alpha2[k]*R/(alpha1[i]+alpha2[j]);
+                    double Rbq=R-Raq;
+                    double Rpq=Rap-Raq;
+                    double Rap2=pow(Rap,2);
+                    double Rbp2=pow(Rbp,2);
+                    double Raq2=pow(Raq,2);
+                    double Rbq2=pow(Rbq,2);
+                    double Rpq2=pow(Rpq,2);
+                }
+            }
+        }
+    }
     return 0;
 }
 
