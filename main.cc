@@ -143,13 +143,28 @@ double Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& Z
             }
         }
     }
+    return S12, T11, T12, T22, V11A, V12A, V22A, V11B, V12B, V22B, V1111, V2111, V2121, V2211, V2221, V2222;
+}
 
-    cout << "V1111 = " << V1111 << endl;
-    cout << "V2111 = " << V2111 << endl;
-    cout << "V2121 = " << V2121 << endl;
-    cout << "V2211 = " << V2211 << endl;
-    cout << "V2221 = " << V2221 << endl;
-    cout << "V2222 = " << V2222 << endl;
+double Collect(double& S12, double& T11, double& T12, double& T22, double& V11A, double& V12A, double& V22A, double& V11B, double& V12B, double& V22B, double& V1111, double& V2111, double& V2121, double& V2211, double& V2221, double& V2222){
+    // core Hamiltonian
+    vector<vector<double>> H(2);
+    for (int i=0; i<2; i++){
+        H[i].resize(2);
+    }
+
+    H[0][0]=T11 + V11A + V11B;
+    cout << T11 << V11A << V11B << endl;
+
+    for (int i=0; i<2; i++){
+        for (int j=0; j<2; j++){
+            cout << H[i][j] << endl;
+        }
+    }
+    // H[0][1]=T12 + V12A + V12B;
+    // H[1][0] = H[1][2];
+    // H[1][1] = T22 + V22A + V22B;
+
     return 0;
 }
 
@@ -167,8 +182,25 @@ int main(int argc, char** argv) {
 
     // HartreeFook_Calculation(N,R,Z1,Z2,ZA,ZB);
 
-    Integral(N, R, Z1, Z2, ZA, ZB);
+    double S12;   
+    double T11;
+    double T12;
+    double T22;
+    double V11A;
+    double V12A;
+    double V22A;
+    double V11B;
+    double V12B;
+    double V22B;
+    double V1111;
+    double V2111;
+    double V2121;
+    double V2211;
+    double V2221;
+    double V2222;
 
+    S12, T11, T12, T22, V11A, V12A, V22A, V11B, V12B, V22B, V1111, V2111, V2121, V2211, V2221, V2222 = Integral(N, R, Z1, Z2, ZA, ZB);
+    Collect(S12, T11, T12, T22, V11A, V12A, V22A, V11B, V12B, V22B, V1111, V2111, V2121, V2211, V2221, V2222);
 
     return 0;
 }
