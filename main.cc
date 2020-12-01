@@ -15,15 +15,15 @@
 using namespace std;
 
 double Function0 (double arg){
-    if (arg < 1e-6){
-        return 1-arg/3; 
+    if (arg < 1.0E-6){
+        return 1.0-arg/3.0; 
     }
-    double F0=0.5*pow(M_PI/arg,0.5)*erf(pow(arg,0.5));
+    double F0 = 0.5*pow(M_PI/arg,0.5)*erf(pow(arg,0.5));
     return F0;
 }
 
 double S_integral(double& alpha, double& beta, double& Rab2) {
-    double S=pow((M_PI)/(alpha+beta),1.5)*exp(-(alpha*beta)/(alpha+beta)*Rab2);
+    double S = pow((M_PI)/(alpha+beta),1.5)*exp(-(alpha*beta)/(alpha+beta)*Rab2);
     return S;
 }
 
@@ -37,12 +37,10 @@ double V_integral(double& alpha, double& beta, double Rab2, double Rcp2 , double
     return V;
 }
 
-double TE_integral(double& A, double& B, double& C, double& D, double& RAB2, double& RCD2, double& RPQ2){
-    double TE=2*pow(M_PI,2.5)pow((A+B)*(C+D)*pow(A + B + C + D,0.5)) * Function0((A+B)*(C+D)*RPQ2/(A+B+C+D))*exp(-A*B*RAB2/(A+B)-C*D*RCD2/(C + D),-1)
+double TE_integral(double A, double B, double C, double D, double RAB2, double RCD2, double RPQ2){
+    double TE = 2.0*pow(M_PI,2.5)/((A+B)*(C+D)*pow(A+B+C+D,0.5))*Function0((A+B)*(C+D)*RPQ2/(A+B+C+D))*exp(-A*B*RAB2/(A+B)-C*D*RCD2/(C+D));
     return TE;
 }
-
-
 
 double Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& ZB) {
     
@@ -68,10 +66,10 @@ double Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& Z
 
     for (int i=0; i<N; i++){
         //to fit slater function with orbital exponent different than 1 (equation 3.224) 
-        alpha1[i]=expon[i][N-1] *pow(Z1, 2);
-        alpha2[i]=expon[i][N-1] *pow(Z2, 2);
-        cont1[i]=coef[i][N-1]   *pow(2*alpha1[i]/M_PI,0.75);
-        cont2[i]=coef[i][N-1]   *pow(2*alpha2[i]/M_PI,0.75);
+        alpha1[i]=expon[i][N-1]*pow(Z1, 2);
+        alpha2[i]=expon[i][N-1]*pow(Z2, 2);
+        cont1[i]=coef[i][N-1]*pow(2*alpha1[i]/M_PI,0.75);
+        cont2[i]=coef[i][N-1]*pow(2*alpha2[i]/M_PI,0.75);
     }
 
     double Rab2=pow(R,2);
@@ -109,10 +107,10 @@ double Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& Z
     cout << "T22= " << T22 << endl;
     cout << "V11A= " << V11A << endl;
     cout << "V12A= " << V12A << endl;
-    cout << "V22A" << V22A << endl;
+    cout << "V22A=" << V22A << endl;
     cout << "V11B= " << V11B << endl;
-    cout << "V12B" << V12B << endl;
-    cout << "V22B" << V22B << endl;
+    cout << "V12B=" << V12B << endl;
+    cout << "V22B=" << V22B << endl;
 
     double V1111 = 0;
     double V2111 = 0;
@@ -122,12 +120,12 @@ double Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& Z
     double V2222 = 0;
 
     for (int i=0; i<N; i++){
-        for (int j=0; i<N; i++){
-            for (int k=0; i<N; i++){
-                for (int l=0; i<N; i++){
-                    double Rap=alpha2[i]*R/(alpha1[i]+alpha2[j]);
+        for (int j=0; j<N; j++){
+            for (int k=0; k<N; k++){
+                for (int l=0; l<N; l++){
+                    double Rap=alpha2[i]*R/(alpha2[i]+alpha1[j]);
                     double Rbp=R-Rap;
-                    double Raq=alpha2[k]*R/(alpha1[i]+alpha2[j]);
+                    double Raq=alpha2[k]*R/(alpha2[k]+alpha1[l]);
                     double Rbq=R-Raq;
                     double Rpq=Rap-Raq;
                     double Rap2=pow(Rap,2);
@@ -135,10 +133,23 @@ double Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& Z
                     double Raq2=pow(Raq,2);
                     double Rbq2=pow(Rbq,2);
                     double Rpq2=pow(Rpq,2);
+                    V1111+=TE_integral(alpha1[i], alpha1[j], alpha1[k], alpha1[l], 0, 0, 0)*cont1[i]*cont1[j]*cont1[k]*cont1[l];
+                    V2111+=TE_integral(alpha2[i], alpha1[j], alpha1[k], alpha1[l], Rab2, 0, Rap2)*cont2[i]*cont1[j]*cont1[k]*cont1[l];
+                    V2121+=TE_integral(alpha2[i], alpha1[j], alpha2[k], alpha1[l], Rab2, Rab2, Rpq2)*cont2[i]*cont1[j]*cont2[k]*cont1[l];
+                    V2211+=TE_integral(alpha2[i], alpha2[j], alpha1[k], alpha1[l], 0, 0, Rab2)*cont2[i]*cont2[j]*cont1[k]*cont1[l];
+                    V2221+=TE_integral(alpha2[i], alpha2[j], alpha2[k], alpha1[l], 0, Rab2, Rbq2)*cont2[i]*cont2[j]*cont2[k]*cont1[l];
+                    V2222+=TE_integral(alpha2[i], alpha2[j], alpha2[k], alpha2[l], 0, 0, 0)*cont2[i]*cont2[j]*cont2[k]*cont2[l];
                 }
             }
         }
     }
+
+    cout << "V1111 = " << V1111 << endl;
+    cout << "V2111 = " << V2111 << endl;
+    cout << "V2121 = " << V2121 << endl;
+    cout << "V2211 = " << V2211 << endl;
+    cout << "V2221 = " << V2221 << endl;
+    cout << "V2222 = " << V2222 << endl;
     return 0;
 }
 
