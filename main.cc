@@ -42,9 +42,8 @@ double TE_integral(double A, double B, double C, double D, double RAB2, double R
     return TE;
 }
 
-double Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& ZB) {
+double Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& ZB, double& S12, double& T11, double& T12, double& T22, double& V11A, double& V12A, double& V22A, double& V11B, double& V12B, double& V22B, double& V1111, double& V2111, double& V2121, double& V2211, double& V2221, double& V2222) {
     
-
     //contraction coefficient and exponent for normalized slater orbital
     // for STO-1G alpha=0.27 and coeff=1, ecc...
     vector<vector<double>> coef{
@@ -73,16 +72,6 @@ double Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& Z
     }
 
     double Rab2=pow(R,2);
-    double S12=0;   
-    double T11=0;
-    double T12=0;
-    double T22=0;
-    double V11A=0;
-    double V12A=0;
-    double V22A=0;
-    double V11B=0;
-    double V12B=0;
-    double V22B=0;
 
     for (int i=0; i<N; i++){
         for(int j=0; j<N; j++){
@@ -101,23 +90,6 @@ double Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& Z
             V22B+=V_integral(alpha2[i], alpha2[j], 0, 0, ZB) * cont2[i] * cont2[j];
         }
     }
-    cout << "S12= " << S12 << endl;
-    cout << "T11= " << T11 << endl;
-    cout << "T12= " << T12 << endl;
-    cout << "T22= " << T22 << endl;
-    cout << "V11A= " << V11A << endl;
-    cout << "V12A= " << V12A << endl;
-    cout << "V22A=" << V22A << endl;
-    cout << "V11B= " << V11B << endl;
-    cout << "V12B=" << V12B << endl;
-    cout << "V22B=" << V22B << endl;
-
-    double V1111 = 0;
-    double V2111 = 0;
-    double V2121 = 0;
-    double V2211 = 0;
-    double V2221 = 0;
-    double V2222 = 0;
 
     for (int i=0; i<N; i++){
         for (int j=0; j<N; j++){
@@ -143,28 +115,24 @@ double Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& Z
             }
         }
     }
-    return S12, T11, T12, T22, V11A, V12A, V22A, V11B, V12B, V22B, V1111, V2111, V2121, V2211, V2221, V2222;
+    return 0;
 }
 
-double Collect(double& S12, double& T11, double& T12, double& T22, double& V11A, double& V12A, double& V22A, double& V11B, double& V12B, double& V22B, double& V1111, double& V2111, double& V2121, double& V2211, double& V2221, double& V2222){
+double Collect(double& S12, double& T11, double& T12, double& T22, double& V11A, double& V12A, double& V22A, double& V11B, double& V12B, double& V22B, double& V1111, double& V2111, double& V2121, double& V2211, double& V2221, double& V2222, vector<vector<double>>& H_core, vector<vector<double>>& S_mat){
+
+    for (int i=0; i<2; i++){
+        H_core[i].resize(2);
+        S_mat[i].resize(2);
+    }
+    
     // core Hamiltonian
-    vector<vector<double>> H(2);
-    for (int i=0; i<2; i++){
-        H[i].resize(2);
-    }
+    H_core[0][0]=T11+V11A+V11B;
+    H_core[0][1]=H_core[1][0]=T12+V12A+V12B;
+    H_core[1][1]=T22+V22A+V22B;
 
-    H[0][0]=T11 + V11A + V11B;
-    cout << T11 << V11A << V11B << endl;
-
-    for (int i=0; i<2; i++){
-        for (int j=0; j<2; j++){
-            cout << H[i][j] << endl;
-        }
-    }
-    // H[0][1]=T12 + V12A + V12B;
-    // H[1][0] = H[1][2];
-    // H[1][1] = T22 + V22A + V22B;
-
+    // S matrix
+    S_mat[0][0]=S_mat[1][1]=(double)1;
+    S_mat[0][1]=S_mat[1][0]=S12;
     return 0;
 }
 
@@ -182,25 +150,36 @@ int main(int argc, char** argv) {
 
     // HartreeFook_Calculation(N,R,Z1,Z2,ZA,ZB);
 
-    double S12;   
-    double T11;
-    double T12;
-    double T22;
-    double V11A;
-    double V12A;
-    double V22A;
-    double V11B;
-    double V12B;
-    double V22B;
-    double V1111;
-    double V2111;
-    double V2121;
-    double V2211;
-    double V2221;
-    double V2222;
+    double S12=0;   
+    double T11=0;
+    double T12=0;
+    double T22=0;
+    double V11A=0;
+    double V12A=0;
+    double V22A=0;
+    double V11B=0;
+    double V12B=0;
+    double V22B=0;
+    double V1111=0;
+    double V2111=0;
+    double V2121=0;
+    double V2211=0;
+    double V2221=0;
+    double V2222=0;
 
-    S12, T11, T12, T22, V11A, V12A, V22A, V11B, V12B, V22B, V1111, V2111, V2121, V2211, V2221, V2222 = Integral(N, R, Z1, Z2, ZA, ZB);
-    Collect(S12, T11, T12, T22, V11A, V12A, V22A, V11B, V12B, V22B, V1111, V2111, V2121, V2211, V2221, V2222);
+    Integral(N, R, Z1, Z2, ZA, ZB, S12, T11, T12, T22, V11A, V12A, V22A, V11B, V12B, V22B, V1111, V2111, V2121, V2211, V2221, V2222);
+
+    vector<vector<double>> H_core(2);
+    vector<vector<double>> S_mat(2);
+
+
+    Collect(S12, T11, T12, T22, V11A, V12A, V22A, V11B, V12B, V22B, V1111, V2111, V2121, V2211, V2221, V2222, H_core, S_mat);
+
+    for (int i=0; i<2; i++){
+        for (int j=0; j<2; j++){
+            cout << S_mat[i][j] << endl;
+        }
+    }
 
     return 0;
 }
