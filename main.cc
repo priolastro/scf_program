@@ -208,12 +208,25 @@ void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vect
                 }
             }
         }
-         for (int i=0; i<2; i++){
+       
+       // form Fock Matrix
+        vector<vector<double>> F_mat(2);
+        for (int i=0; i<2; i++){
+            F_mat[i].resize(2);
             for (int j=0; j<2; j++){
-                cout << G_mat[i][j] << endl;
-                }
+                F_mat[i][j]=H_core[i][j]+G_mat[i][j];
             }
+        }
 
+        //Calculate electronic energy
+        double EN=0.0;
+        for (int i=0; i<2; i++){
+            for (int j=0; j<2; j++){
+                EN += 0.5 * P[i][j] * (H_core[i][j] + F_mat[i][j]);
+            }
+        }
+
+        cout << "Energy is: " << EN << endl;
 
         if (ITER>=MAXIT)
             break;
@@ -221,7 +234,6 @@ void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vect
 
 
 }
-
 
 
 int main(int argc, char** argv) {
@@ -262,7 +274,6 @@ int main(int argc, char** argv) {
     vector<vector<vector<vector<double>>>> Two_el_mat(2);
 
     Collect(S12, T11, T12, T22, V11A, V12A, V22A, V11B, V12B, V22B, V1111, V2111, V2121, V2211, V2221, V2222, H_core, S_mat, X_mat, X_mat_T, Two_el_mat);
-
 
     SCF(R, ZA, ZB, H_core, S_mat, X_mat, X_mat_T, Two_el_mat);
 
