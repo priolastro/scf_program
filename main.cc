@@ -42,7 +42,7 @@ double TE_integral(double A, double B, double C, double D, double RAB2, double R
     return TE;
 }
 
-double Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& ZB, double& S12, double& T11, double& T12, double& T22, double& V11A, double& V12A, double& V22A, double& V11B, double& V12B, double& V22B, double& V1111, double& V2111, double& V2121, double& V2211, double& V2221, double& V2222) {
+void Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& ZB, double& S12, double& T11, double& T12, double& T22, double& V11A, double& V12A, double& V22A, double& V11B, double& V12B, double& V22B, double& V1111, double& V2111, double& V2121, double& V2211, double& V2221, double& V2222){
     
     //contraction coefficient and exponent for normalized slater orbital
     // for STO-1G alpha=0.27 and coeff=1, ecc...
@@ -115,14 +115,24 @@ double Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& Z
             }
         }
     }
-    return 0;
 }
 
-double Collect(double& S12, double& T11, double& T12, double& T22, double& V11A, double& V12A, double& V22A, double& V11B, double& V12B, double& V22B, double& V1111, double& V2111, double& V2121, double& V2211, double& V2221, double& V2222, vector<vector<double>>& H_core, vector<vector<double>>& S_mat){
+void Collect(double& S12, double& T11, double& T12, double& T22, double& V11A, double& V12A, double& V22A, double& V11B, double& V12B, double& V22B, double& V1111, double& V2111, double& V2121, double& V2211, double& V2221, double& V2222, vector<vector<double>>& H_core, vector<vector<double>>& S_mat, vector<vector<double>>& X_mat, vector<vector<double>>& X_mat_T,  vector<vector<vector<vector<double>>>>& Two_el_mat){
 
     for (int i=0; i<2; i++){
         H_core[i].resize(2);
         S_mat[i].resize(2);
+        X_mat[i].resize(2);
+        X_mat_T[i].resize(2);
+        Two_el_mat[i].resize(2);
+
+        for (int j=0; j<2; j++){
+            Two_el_mat[i][j].resize(2);
+
+            for (int k=0; k<2; k++){
+                Two_el_mat[i][j][k].resize(2);
+            }
+        }
     }
     
     // core Hamiltonian
@@ -133,8 +143,86 @@ double Collect(double& S12, double& T11, double& T12, double& T22, double& V11A,
     // S matrix
     S_mat[0][0]=S_mat[1][1]=(double)1;
     S_mat[0][1]=S_mat[1][0]=S12;
-    return 0;
+
+    // X matrix for canonical orthogonalization
+    X_mat[0][0]=X_mat[1][0]=1/pow(2*(1+S_mat[0][1]),0.5);
+    X_mat[0][1]=1/pow(2*(1-S_mat[0][1]),0.5);
+    X_mat[1][1]=-X_mat[0][1];
+
+    // Transpose X
+    X_mat_T[0][0]=X_mat[0][0];
+    X_mat_T[0][1]=X_mat[1][0];
+    X_mat_T[1][0]=X_mat[0][1];
+    X_mat_T[1][1]=X_mat[1][1];
+
+    // Two_eletron integrals matrix
+    Two_el_mat[0][0][0][0]=V1111;
+
+    Two_el_mat[1][0][0][0]=V2111;
+    Two_el_mat[0][1][0][0]=V2111;
+    Two_el_mat[0][0][1][0]=V2111;
+    Two_el_mat[0][0][0][1]=V2111;
+
+    Two_el_mat[1][0][1][0]=V2121;
+    Two_el_mat[0][1][0][1]=V2121;
+    Two_el_mat[1][1][0][0]=V2121;
+    Two_el_mat[0][0][1][1]=V2121;
+
+    Two_el_mat[0][0][1][1]=V2211;
+    Two_el_mat[1][1][0][0]=V2211;
+
+    Two_el_mat[1][1][1][0]=V2221;
+    Two_el_mat[1][1][0][1]=V2221;
+    Two_el_mat[1][0][1][1]=V2221;
+    Two_el_mat[0][1][1][1]=V2222;
+
 }
+
+void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vector<vector<double>>& S_mat, vector<vector<double>>& X_mat, vector<vector<double>>& X_mat_T,  vector<vector<vector<vector<double>>>>& Two_el_mat){
+    double TRESH=1.0E-4;
+    int MAXIT=25;
+    int ITER=0;
+
+    vector<vector<double>> P(2);
+    for (int i=0; i<2; i++){
+        P[i].resize(2);
+        for (int j=0; j<2; j++){
+            P[i][j]=0.0;
+        }
+    }
+
+    while (true){
+        ITER+=1;
+        cout << "Iteration number \t" << ITER << endl;
+        
+        //form matrix G
+        vector<vector<double>> G_mat(2);
+        for (int i=0; i<2; i++){
+            G_mat[i].resize(2);
+            for (int j=0; j<2; j++){
+                G_mat[i][j]=0.0;
+                for (int k=0; k<2; k++){
+                    for (int l=0; l<2; l++){
+                        G_mat[i][j] += P[k][l] * (Two_el_mat[i][j][k][l] - 0.5 * Two_el_mat[i][l][k][j]);
+                    }
+                }
+            }
+        }
+         for (int i=0; i<2; i++){
+            for (int j=0; j<2; j++){
+                cout << G_mat[i][j] << endl;
+                }
+            }
+
+
+        if (ITER>=MAXIT)
+            break;
+    }
+
+
+}
+
+
 
 int main(int argc, char** argv) {
     
@@ -147,8 +235,6 @@ int main(int argc, char** argv) {
 
     cout << "Input parameters:\n";
     cout << N << " " << R << " " << Z1 << " " << Z2 << " " << ZA << " " << ZB << " \n\n" << endl;
-
-    // HartreeFook_Calculation(N,R,Z1,Z2,ZA,ZB);
 
     double S12=0;   
     double T11=0;
@@ -171,15 +257,14 @@ int main(int argc, char** argv) {
 
     vector<vector<double>> H_core(2);
     vector<vector<double>> S_mat(2);
+    vector<vector<double>> X_mat(2);
+    vector<vector<double>> X_mat_T(2);
+    vector<vector<vector<vector<double>>>> Two_el_mat(2);
+
+    Collect(S12, T11, T12, T22, V11A, V12A, V22A, V11B, V12B, V22B, V1111, V2111, V2121, V2211, V2221, V2222, H_core, S_mat, X_mat, X_mat_T, Two_el_mat);
 
 
-    Collect(S12, T11, T12, T22, V11A, V12A, V22A, V11B, V12B, V22B, V1111, V2111, V2121, V2211, V2221, V2222, H_core, S_mat);
-
-    for (int i=0; i<2; i++){
-        for (int j=0; j<2; j++){
-            cout << S_mat[i][j] << endl;
-        }
-    }
+    SCF(R, ZA, ZB, H_core, S_mat, X_mat, X_mat_T, Two_el_mat);
 
     return 0;
 }
