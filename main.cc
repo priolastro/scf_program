@@ -11,8 +11,24 @@
 #include <iomanip>
 #include <fstream>
 #include<vector>
-
 using namespace std;
+
+void PRINT_MATRIX(vector<vector<double>>& mat){
+    cout << "#######" << endl;
+    for (int i=0; i<2; i++){
+        for (int j=0; j<1; j++){ 
+            cout << mat[i][j] << "\t" << mat[i][j+1] << endl;
+        }
+    }
+    cout << "#######" << endl;
+}
+
+void PRINT_VECTOR(vector<double>& vec){
+    cout << "#######" << endl;
+    for (int i=0; i<2; i++){
+        cout << vec[i] << endl;
+    }
+}
 
 double Function0 (double arg){
     if (arg < 1.0E-6){
@@ -40,6 +56,38 @@ double V_integral(double& alpha, double& beta, double Rab2, double Rcp2 , double
 double TE_integral(double A, double B, double C, double D, double RAB2, double RCD2, double RPQ2){
     double TE = 2.0*pow(M_PI,2.5)/((A+B)*(C+D)*pow(A+B+C+D,0.5))*Function0((A+B)*(C+D)*RPQ2/(A+B+C+D))*exp(-A*B*RAB2/(A+B)-C*D*RCD2/(C+D));
     return TE;
+}
+
+void DIAGONALIZE(vector<vector<double>>& F_mat, vector<vector<double>>& C_mat, vector<double>& E){
+    double THETA;
+    double TEMP;
+    if (abs(F_mat[0][0]-F_mat[1][1]) > 1.0E-20){
+        THETA = 0.5 * atan(2.0 * F_mat[0][1] / (F_mat[0][0] - F_mat[1][1]));
+    }
+    else{
+        THETA = M_PI_2/4.0;
+    }
+    C_mat[0][0] = cos(THETA);
+    C_mat[1][0] = sin(THETA);
+    C_mat[0][1] = sin(THETA);
+    C_mat[1][1] = -cos(THETA);
+    E[0] = F_mat[0][0] * pow(cos(THETA),2) + F_mat[1][1] * pow(sin(THETA),2) + F_mat[0][1] * sin(2.0 * THETA);
+    E[1] = F_mat[1][1] * pow(cos(THETA),2) + F_mat[0][0] * pow(sin(THETA),2) - F_mat[0][1] * sin(2.0 * THETA);
+    
+    if (E[1]>E[0]){
+        return;
+    }
+    // TEMP = E[1];
+    // E[1]= E[0];
+    // E[0] = TEMP;
+
+    // TEMP = C_mat[0][1];
+    // C_mat[0][1] = C_mat[0][0];
+    // C_mat[0][0] = TEMP;
+
+    // TEMP = C_mat[1][1];
+    // C_mat[1][1] = C_mat[1][0];
+    // C_mat[1][0] = TEMP;
 }
 
 void Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& ZB, double& S12, double& T11, double& T12, double& T22, double& V11A, double& V12A, double& V22A, double& V11B, double& V12B, double& V22B, double& V1111, double& V2111, double& V2121, double& V2211, double& V2221, double& V2222){
@@ -157,20 +205,16 @@ void Collect(double& S12, double& T11, double& T12, double& T22, double& V11A, d
 
     // Two_eletron integrals matrix
     Two_el_mat[0][0][0][0]=V1111;
-
     Two_el_mat[1][0][0][0]=V2111;
     Two_el_mat[0][1][0][0]=V2111;
     Two_el_mat[0][0][1][0]=V2111;
     Two_el_mat[0][0][0][1]=V2111;
-
     Two_el_mat[1][0][1][0]=V2121;
     Two_el_mat[0][1][0][1]=V2121;
     Two_el_mat[1][1][0][0]=V2121;
     Two_el_mat[0][0][1][1]=V2121;
-
     Two_el_mat[0][0][1][1]=V2211;
     Two_el_mat[1][1][0][0]=V2211;
-
     Two_el_mat[1][1][1][0]=V2221;
     Two_el_mat[1][1][0][1]=V2221;
     Two_el_mat[1][0][1][1]=V2221;
@@ -180,14 +224,14 @@ void Collect(double& S12, double& T11, double& T12, double& T22, double& V11A, d
 
 void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vector<vector<double>>& S_mat, vector<vector<double>>& X_mat, vector<vector<double>>& X_mat_T,  vector<vector<vector<vector<double>>>>& Two_el_mat){
     double TRESH=1.0E-4;
-    int MAXIT=25;
+    int MAXIT=3;
     int ITER=0;
 
-    vector<vector<double>> P(2);
+    vector<vector<double>> P_mat(2);
     for (int i=0; i<2; i++){
-        P[i].resize(2);
+        P_mat[i].resize(2);
         for (int j=0; j<2; j++){
-            P[i][j]=0.0;
+            P_mat[i][j]=0.0;
         }
     }
 
@@ -195,6 +239,9 @@ void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vect
         ITER+=1;
         cout << "Iteration number \t" << ITER << endl;
         
+        PRINT_MATRIX(P_mat);
+
+
         //form matrix G
         vector<vector<double>> G_mat(2);
         for (int i=0; i<2; i++){
@@ -203,13 +250,13 @@ void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vect
                 G_mat[i][j]=0.0;
                 for (int k=0; k<2; k++){
                     for (int l=0; l<2; l++){
-                        G_mat[i][j] += P[k][l] * (Two_el_mat[i][j][k][l] - 0.5 * Two_el_mat[i][l][k][j]);
+                        G_mat[i][j] += P_mat[k][l] * (Two_el_mat[i][j][k][l] - 0.5 * Two_el_mat[i][l][k][j]);
                     }
                 }
             }
         }
        
-       // form Fock Matrix
+        //Form Fock matrix (is equal to core Hamiltonian in the first iteration)
         vector<vector<double>> F_mat(2);
         for (int i=0; i<2; i++){
             F_mat[i].resize(2);
@@ -219,14 +266,85 @@ void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vect
         }
 
         //Calculate electronic energy
-        double EN=0.0;
+        double Ene=0.0;
         for (int i=0; i<2; i++){
             for (int j=0; j<2; j++){
-                EN += 0.5 * P[i][j] * (H_core[i][j] + F_mat[i][j]);
+                Ene += 0.5 * P_mat[i][j] * (H_core[i][j] + F_mat[i][j]);
             }
         }
 
-        cout << "Energy is: " << EN << endl;
+        cout << "Electronic energy = " << Ene << endl;
+
+        //Calculate transformed Fock matrix
+        vector<vector<double>> F_mat_prime(2);
+        for (int i=0; i<2; i++){
+            F_mat_prime[i].resize(2);
+            for (int j=0; j<2; j++){
+                for (int k=0; k<2; k++){
+                    for (int l=0; l<2; l++){
+                        F_mat_prime[i][j]+=X_mat_T[i][k]*F_mat[k][l]*X_mat[l][j];
+                    }
+                }
+            }
+        }
+
+
+        //Diagonalize transformed Fock matrix to obtain coefficient vector and energies
+        vector<double> E(2);
+        vector<vector<double>> C_prime(2);
+        for (int i=0; i<2; i++){
+            C_prime[i].resize(2);
+            }
+        // diag_symm(F_mat_prime, C_prime, E);
+        DIAGONALIZE(F_mat_prime, C_prime, E);
+        
+        // PRINT_MATRIX(C_prime);
+        // PRINT_VECTOR(E);
+
+        // Calculate C 
+        vector<vector<double>> C_mat(2);
+        for (int i=0; i<2; i++){
+            C_mat[i].resize(2);
+            for (int j=0; j<2; j++){
+                for (int k=0; k<2; k++){
+                C_mat[i][j]+=X_mat[i][k]*C_prime[k][j];
+                }
+            }
+        }
+        // PRINT_MATRIX(C_mat);
+
+        //Form new density matrix
+        vector<vector<double>> P_mat_OLD(2);
+        for (int i=0; i<2; i++){
+            P_mat_OLD[i].resize(2);
+            for (int j=0; j<2; j++){
+                P_mat_OLD[i][j]=P_mat[i][j];
+
+                // P_mat[i][j]=0.0;
+                for (int k=1; k<2; k++)
+                P_mat[i][j]=2.0*C_mat[i][j]*C_mat[i][j];
+
+                // cout << i << j << " " << i << j << " " << i << j << endl;
+
+                    // cout << "P" << i << j << "=" << "C" << i << j << " * " << "C" << j << i << endl;
+                    // cout << "@@@@@" << endl;
+                    // cout << P_mat[i][j] << endl;
+                    // cout << "@@@@@" << endl;
+            }
+        }
+
+        PRINT_MATRIX(P_mat);
+        
+        //Calculate Delta
+        double DELTA;
+        for (int i=0; i<2; i++){
+            for (int j=0; j<2; j++){
+                DELTA+=pow(P_mat[i][j]-P_mat_OLD[i][j],2);
+            }
+        }
+        DELTA=pow(DELTA/4.0,0.5);
+        cout << "DELTA(CONVERGENCE OF DENSITY MATRIX) =" << DELTA << endl;
+
 
         if (ITER>=MAXIT)
             break;
