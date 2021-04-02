@@ -90,7 +90,13 @@ void DIAGONALIZE(vector<vector<double>>& F_mat, vector<vector<double>>& C_mat, v
     // C_mat[1][0] = TEMP;
 }
 
-void Integral(int& N, double& R, double& Z1, double& Z2, double& ZA, double& ZB, double& S12, double& T11, double& T12, double& T22, double& V11A, double& V12A, double& V22A, double& V11B, double& V12B, double& V22B, double& V1111, double& V2111, double& V2121, double& V2211, double& V2221, double& V2222){
+void Integral(int& N, double& R, 
+            double& Z1, double& Z2, double& ZA, double& ZB, 
+            double& S12, 
+            double& T11, double& T12, double& T22, 
+            double& V11A, double& V12A, double& V22A, double& V11B, double& V12B, double& V22B, 
+            double& V1111, double& V2111, double& V2121, double& V2211, double& V2221, double& V2222)
+            {
     
     //contraction coefficient and exponent for normalized slater orbital
     // for STO-1G alpha=0.27 and coeff=1, ecc...
@@ -237,9 +243,11 @@ void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vect
 
     while (true){
         ITER+=1;
-        cout << "Iteration number \t" << ITER << endl;
         
+        cout << "P matrix" << endl;
         PRINT_MATRIX(P_mat);
+        cout << "Iteration number \t" << ITER << endl;
+
 
 
         //form matrix G
@@ -255,7 +263,10 @@ void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vect
                 }
             }
         }
-       
+                
+        cout << "G matrix" << endl;
+        PRINT_MATRIX(G_mat);
+
         //Form Fock matrix (is equal to core Hamiltonian in the first iteration)
         vector<vector<double>> F_mat(2);
         for (int i=0; i<2; i++){
@@ -273,6 +284,8 @@ void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vect
             }
         }
 
+        cout << "F matrix" << endl;
+        PRINT_MATRIX(F_mat);
         cout << "Electronic energy = " << Ene << endl;
 
         //Calculate transformed Fock matrix
@@ -287,7 +300,10 @@ void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vect
                 }
             }
         }
+        
+        cout << "F prime matrix" << endl;
 
+        PRINT_MATRIX(F_mat_prime);
 
         //Diagonalize transformed Fock matrix to obtain coefficient vector and energies
         vector<double> E(2);
@@ -298,8 +314,9 @@ void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vect
         // diag_symm(F_mat_prime, C_prime, E);
         DIAGONALIZE(F_mat_prime, C_prime, E);
         
-        // PRINT_MATRIX(C_prime);
-        // PRINT_VECTOR(E);
+        cout << "C matrix" << endl;
+        PRINT_MATRIX(C_prime);
+        PRINT_VECTOR(E);
 
         // Calculate C 
         vector<vector<double>> C_mat(2);
@@ -391,7 +408,11 @@ int main(int argc, char** argv) {
     vector<vector<double>> X_mat_T(2);
     vector<vector<vector<vector<double>>>> Two_el_mat(2);
 
-    Collect(S12, T11, T12, T22, V11A, V12A, V22A, V11B, V12B, V22B, V1111, V2111, V2121, V2211, V2221, V2222, H_core, S_mat, X_mat, X_mat_T, Two_el_mat);
+    Collect(S12, 
+    T11, T12, T22, 
+    V11A, V12A, V22A, V11B, V12B, V22B, 
+    V1111, V2111, V2121, V2211, V2221, V2222, 
+    H_core, S_mat, X_mat, X_mat_T, Two_el_mat);
 
     SCF(R, ZA, ZB, H_core, S_mat, X_mat, X_mat_T, Two_el_mat);
 
