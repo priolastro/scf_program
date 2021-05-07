@@ -1,6 +1,6 @@
 // MINIMAL BASIS STO-3G CALCULATION ON HEH+
 
-// THIS IS alpha LITTLE DUMMY MAIN PROGRAM WHICH CALLS HFCALC
+// THIS IS A LITTLE DUMMY MAIN PROGRAM WHICH CALLS HFCALC
 // Attila Szabo and Neil S. Ostlund
 //https://github.com/lcb/szabo.py/blob/master/szabo.py
 
@@ -28,6 +28,7 @@ void PRINT_VECTOR(vector<double>& vec){
     for (int i=0; i<2; i++){
         cout << vec[i] << endl;
     }
+    cout << "#######" << endl;
 }
 
 double Function0 (double arg){
@@ -230,7 +231,7 @@ void Collect(double& S12, double& T11, double& T12, double& T22, double& V11A, d
 
 void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vector<vector<double>>& S_mat, vector<vector<double>>& X_mat, vector<vector<double>>& X_mat_T,  vector<vector<vector<vector<double>>>>& Two_el_mat){
     double TRESH=1.0E-4;
-    int MAXIT=3;
+    int MAXIT=30;
     int ITER=0;
 
     vector<vector<double>> P_mat(2);
@@ -314,8 +315,9 @@ void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vect
         // diag_symm(F_mat_prime, C_prime, E);
         DIAGONALIZE(F_mat_prime, C_prime, E);
         
-        cout << "C matrix" << endl;
+        cout << "C prime matrix" << endl;
         PRINT_MATRIX(C_prime);
+        cout << "Energy vector" << endl;
         PRINT_VECTOR(E);
 
         // Calculate C 
@@ -328,7 +330,9 @@ void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vect
                 }
             }
         }
-        // PRINT_MATRIX(C_mat);
+        
+        cout << "C matrix" << endl;
+        PRINT_MATRIX(C_mat);
 
         //Form new density matrix
         vector<vector<double>> P_mat_OLD(2);
@@ -336,20 +340,12 @@ void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vect
             P_mat_OLD[i].resize(2);
             for (int j=0; j<2; j++){
                 P_mat_OLD[i][j]=P_mat[i][j];
-
-                // P_mat[i][j]=0.0;
-                for (int k=1; k<2; k++)
-                P_mat[i][j]=2.0*C_mat[i][j]*C_mat[i][j];
-
-                // cout << i << j << " " << i << j << " " << i << j << endl;
-
-                    // cout << "P" << i << j << "=" << "C" << i << j << " * " << "C" << j << i << endl;
-                    // cout << "@@@@@" << endl;
-                    // cout << P_mat[i][j] << endl;
-                    // cout << "@@@@@" << endl;
+                P_mat[i][j]=0.0;
+                for (int k=0; k<1; k++)
+                P_mat[i][j]=P_mat[i][j]+2.0*C_mat[i][k]*C_mat[j][k];
             }
         }
-
+        cout << "P matrix" << endl;
         PRINT_MATRIX(P_mat);
         
         //Calculate Delta
@@ -362,7 +358,8 @@ void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vect
         DELTA=pow(DELTA/4.0,0.5);
         cout << "DELTA(CONVERGENCE OF DENSITY MATRIX) =" << DELTA << endl;
 
-
+        if (DELTA <= TRESH)
+            break;
         if (ITER>=MAXIT)
             break;
     }
