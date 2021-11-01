@@ -1,8 +1,9 @@
 // MINIMAL BASIS STO-3G CALCULATION ON HEH+
 
-// THIS IS A LITTLE DUMMY MAIN PROGRAM WHICH CALLS HFCALC
+// THIS IS A LITTLE DUMMY MAIN PROGRAM FOR HF
 // Attila Szabo and Neil S. Ostlund
 //https://github.com/lcb/szabo.py/blob/master/szabo.py
+//compile with standard 11
 
 
 #define _USE_MATH_DEFINES
@@ -10,7 +11,7 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
-#include<vector>
+#include <vector>
 using namespace std;
 
 void PRINT_MATRIX(vector<vector<double>>& mat){
@@ -211,27 +212,28 @@ void Collect(double& S12, double& T11, double& T12, double& T22, double& V11A, d
     X_mat_T[1][1]=X_mat[1][1];
 
     // Two_eletron integrals matrix
-    Two_el_mat[0][0][0][0]=V1111;
-    Two_el_mat[1][0][0][0]=V2111;
-    Two_el_mat[0][1][0][0]=V2111;
-    Two_el_mat[0][0][1][0]=V2111;
-    Two_el_mat[0][0][0][1]=V2111;
-    Two_el_mat[1][0][1][0]=V2121;
-    Two_el_mat[0][1][0][1]=V2121;
-    Two_el_mat[1][1][0][0]=V2121;
-    Two_el_mat[0][0][1][1]=V2121;
-    Two_el_mat[0][0][1][1]=V2211;
-    Two_el_mat[1][1][0][0]=V2211;
-    Two_el_mat[1][1][1][0]=V2221;
-    Two_el_mat[1][1][0][1]=V2221;
-    Two_el_mat[1][0][1][1]=V2221;
-    Two_el_mat[0][1][1][1]=V2222;
+    Two_el_mat[0][0][0][0] = V1111;
+    Two_el_mat[1][0][0][0] = V2111;
+    Two_el_mat[0][1][0][0] = V2111;
+    Two_el_mat[0][0][1][0] = V2111;
+    Two_el_mat[0][0][0][1] = V2111;
+    Two_el_mat[1][0][1][0] = V2121;
+    Two_el_mat[0][1][1][0] = V2121;
+    Two_el_mat[1][0][0][1] = V2121;
+    Two_el_mat[0][1][0][1] = V2121;
+    Two_el_mat[1][1][0][0] = V2211;
+    Two_el_mat[0][0][1][1] = V2211;
+    Two_el_mat[1][1][1][0] = V2221;
+    Two_el_mat[1][1][0][1] = V2221;
+    Two_el_mat[1][0][1][1] = V2221;
+    Two_el_mat[0][1][1][1] = V2221;
+    Two_el_mat[1][1][1][1] = V2222;
 
 }
 
 void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vector<vector<double>>& S_mat, vector<vector<double>>& X_mat, vector<vector<double>>& X_mat_T,  vector<vector<vector<vector<double>>>>& Two_el_mat){
     double TRESH=1.0E-4;
-    int MAXIT=30;
+    int MAXIT=6;
     int ITER=0;
 
     vector<vector<double>> P_mat(2);
@@ -248,8 +250,6 @@ void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vect
         cout << "P matrix" << endl;
         PRINT_MATRIX(P_mat);
         cout << "Iteration number \t" << ITER << endl;
-
-
 
         //form matrix G
         vector<vector<double>> G_mat(2);
@@ -287,7 +287,19 @@ void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vect
 
         cout << "F matrix" << endl;
         PRINT_MATRIX(F_mat);
+		
         cout << "Electronic energy = " << Ene << endl;
+
+        //Calculate G matrix
+        vector<vector<double>> G_mat_temp(2);
+        for (int i=0; i<2; i++){
+            G_mat_temp[i].resize(2);
+            for (int j=0; j<2; j++){
+                for (int k=0; k<2; k++){
+                    G_mat_temp[i][j]+=F_mat[i][k]*X_mat[k][j];
+                }
+            }
+        }
 
         //Calculate transformed Fock matrix
         vector<vector<double>> F_mat_prime(2);
@@ -295,9 +307,7 @@ void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vect
             F_mat_prime[i].resize(2);
             for (int j=0; j<2; j++){
                 for (int k=0; k<2; k++){
-                    for (int l=0; l<2; l++){
-                        F_mat_prime[i][j]+=X_mat_T[i][k]*F_mat[k][l]*X_mat[l][j];
-                    }
+                        F_mat_prime[i][j]+=X_mat_T[i][k]*G_mat_temp[k][j];
                 }
             }
         }
@@ -349,7 +359,7 @@ void SCF(double& R, double& ZA, double& ZB, vector<vector<double>>& H_core, vect
         PRINT_MATRIX(P_mat);
         
         //Calculate Delta
-        double DELTA;
+        double DELTA=0;
         for (int i=0; i<2; i++){
             for (int j=0; j<2; j++){
                 DELTA+=pow(P_mat[i][j]-P_mat_OLD[i][j],2);
